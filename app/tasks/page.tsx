@@ -3,118 +3,30 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
-
-type Task = {
-  id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-};
+import { useTaskStore } from "@/lib/taskStore";
 
 export default function TasksPage() {
   const router = useRouter();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const {
+    tasks,
+    loading,
+    filter,
+    setFilter,
+    fetchTasks,
+    addTask,
+    toggleTask,
+    deleteTask,
+    updateTask,
+  } = useTaskStore();
+
   const [title, setTitle] = useState("");
-  const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
-  const [loading, setLoading] = useState(true);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
-  async function fetchTasks() {
-    try {
-      const res = await fetch("/api/tasks");
-      if (res.status === 401) {
-        router.push("/login");
-        return;
-      }
-      const data = await res.json();
-      setTasks(data);
-    } catch (err) {
-      console.error("Failed to fetch tasks", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function addTask(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim()) return;
-    try {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
-      });
-      if (res.ok) {
-        setTitle("");
-        fetchTasks();
-      }
-    } catch (err) {
-      console.error("Failed to add task", err);
-    }
-  }
-
-  async function toggleTask(id: string, completed: boolean) {
-    try {
-      const res = await fetch(`/api/tasks/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed }),
-      });
-      if (res.ok) fetchTasks();
-    } catch (err) {
-      console.error("Failed to toggle task", err);
-    }
-  }
-
-  async function deleteTask(id: string) {
-    try {
-      const res = await fetch(`/api/tasks/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) fetchTasks();
-    } catch (err) {
-      console.error("Failed to delete task", err);
-    }
-  }
-
-  function startEditing(task: Task) {
-    setEditingTask(task);
-    setEditTitle(task.title);
-    setEditDescription(task.description || "");
-  }
-
-  function cancelEditing() {
-    setEditingTask(null);
-    setEditTitle("");
-    setEditDescription("");
-  }
-
-  async function saveEdit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editingTask) return;
-    try {
-      const res = await fetch(`/api/tasks/${editingTask.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: editTitle,
-          description: editDescription,
-        }),
-      });
-      if (res.ok) {
-        cancelEditing();
-        fetchTasks();
-      }
-    } catch (err) {
-      console.error("Failed to update task", err);
-    }
-  }
-
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [fetchTasks]);
 
   const filteredTasks = tasks.filter((t) => {
     if (filter === "pending") return !t.completed;
@@ -136,7 +48,15 @@ export default function TasksPage() {
         <Header title="My Tasks" />
 
         {/* Add task form */}
-        <form onSubmit={addTask} className="flex mb-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!title.trim()) return;
+            addTask(title);
+            setTitle("");
+          }}
+          className="flex mb-4"
+        >
           <input
             type="text"
             placeholder="New task title..."
@@ -167,17 +87,26 @@ export default function TasksPage() {
           ))}
         </div>
 
-        {/* Tasks list */}
+        {/* Task list */}
         <ul>
           {filteredTasks.map((task) => (
             <li
               key={task.id}
               className="flex justify-between items-center border-b py-2"
             >
-              {editingTask?.id === task.id ? (
-                <form onSubmit={saveEdit} className="flex flex-col w-full gap-2">
+              {editingTask === task.id ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    updateTask(task.id, {
+                      title: editTitle,
+                      description: editDescription,
+                    });
+                    setEditingTask(null);
+                  }}
+                  className="flex flex-col w-full gap-2"
+                >
                   <input
-                    type="text"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     className="border px-2 py-1 rounded"
@@ -185,20 +114,19 @@ export default function TasksPage() {
                   <textarea
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
-                    placeholder="Description"
                     className="border px-2 py-1 rounded"
                   />
                   <div className="flex gap-2">
                     <button
                       type="submit"
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                      className="bg-green-500 text-white px-3 py-1 rounded"
                     >
                       Save
                     </button>
                     <button
                       type="button"
-                      onClick={cancelEditing}
-                      className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+                      onClick={() => setEditingTask(null)}
+                      className="bg-gray-300 px-3 py-1 rounded"
                     >
                       Cancel
                     </button>
@@ -216,7 +144,11 @@ export default function TasksPage() {
                   </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => startEditing(task)}
+                      onClick={() => {
+                        setEditingTask(task.id);
+                        setEditTitle(task.title);
+                        setEditDescription(task.description || "");
+                      }}
                       className="text-blue-500 text-sm hover:underline"
                     >
                       Edit
@@ -233,10 +165,6 @@ export default function TasksPage() {
             </li>
           ))}
         </ul>
-
-        {filteredTasks.length === 0 && (
-          <p className="text-gray-500 text-center mt-4">No tasks found</p>
-        )}
       </div>
     </div>
   );
