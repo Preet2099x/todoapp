@@ -1,21 +1,38 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
 import { prisma } from "@/lib/db";
-import { signToken, setTokenCookie } from "@/lib/auth";
+import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { email, password } = body ?? {};
-  if (!email || !password) return NextResponse.json({ error: "Missing email/password" }, { status: 400 });
+  try {
+    const { email, username, password, confirmPassword } = await req.json();
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return NextResponse.json({ error: "Email exists" }, { status: 409 });
+    if (!email || !username || !password || !confirmPassword) {
+      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    }
 
-  const hashed = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({ data: { email, password: hashed } });
+    if (password !== confirmPassword) {
+      return NextResponse.json({ error: "Passwords do not match" }, { status: 400 });
+    }
 
-  const token = signToken({ userId: user.id, email: user.email });
-  const res = NextResponse.json({ user: { id: user.id, email: user.email } });
-  setTokenCookie(res, token);
-  return res;
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { username }],
+      },
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ error: "Email or username already in use" }, { status: 400 });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { email, username, password: hashed },
+      select: { id: true, email: true, username: true },
+    });
+
+    return NextResponse.json({ user });
+  } catch (err) {
+    console.error("Signup error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }

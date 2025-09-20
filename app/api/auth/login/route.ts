@@ -1,20 +1,33 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
 import { prisma } from "@/lib/db";
-import { signToken, setTokenCookie } from "@/lib/auth";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
-  if (!email || !password) return NextResponse.json({ error: "Missing" }, { status: 400 });
+  try {
+    const { email, password } = await req.json();
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
 
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
 
-  const token = signToken({ userId: user.id, email: user.email });
-  const res = NextResponse.json({ user: { id: user.id, email: user.email } });
-  setTokenCookie(res, token);
-  return res;
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET!, {
+      expiresIn: "7d",
+    });
+
+    const res = NextResponse.json({
+      user: { id: user.id, email: user.email, username: user.username },
+    });
+    res.cookies.set("token", token, { httpOnly: true, sameSite: "lax", secure: false });
+    return res;
+  } catch (err) {
+    console.error("Login error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }
