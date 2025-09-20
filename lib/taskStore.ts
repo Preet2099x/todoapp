@@ -8,86 +8,197 @@ type Task = {
   dueDate?: string | null;
 };
 
+type ActionResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
+
 type TaskStore = {
   tasks: Task[];
   loading: boolean;
+  adding: boolean;
+  busyById: Record<string, boolean>;
   filter: "all" | "pending" | "completed";
-  setFilter: (filter: "all" | "pending" | "completed") => void;
-  fetchTasks: () => Promise<void>;
-  addTask: (title: string) => Promise<void>;
-  toggleTask: (id: string, completed: boolean) => Promise<void>;
-  deleteTask: (id: string) => Promise<void>;
+
+  // actions
+  setFilter: (f: "all" | "pending" | "completed") => void;
+  fetchTasks: () => Promise<ActionResult<Task[]>>;
+  addTask: (title: string) => Promise<ActionResult<Task>>;
+  toggleTask: (id: string, completed: boolean) => Promise<ActionResult<Task>>;
+  deleteTask: (id: string) => Promise<ActionResult<null>>;
   updateTask: (
     id: string,
     updates: Partial<Pick<Task, "title" | "description" | "dueDate">>
-  ) => Promise<void>;
+  ) => Promise<ActionResult<Task>>;
 };
+
+function handle401() {
+  // Wipe state and force relogin
+  window.location.href = "/login";
+}
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
   loading: false,
+  adding: false,
+  busyById: {},
   filter: "all",
-  setFilter: (filter) => set({ filter }),
+
+  setFilter: (f) => set({ filter: f }),
 
   fetchTasks: async () => {
     set({ loading: true });
     try {
       const res = await fetch("/api/tasks");
-      if (!res.ok) return;
+      if (res.status === 401) {
+        handle401();
+        return { ok: false, error: "Unauthorized" };
+      }
+      if (!res.ok) return { ok: false, error: "Failed to fetch tasks" };
+
       const data = await res.json();
       set({ tasks: data });
-    } catch (err) {
-      console.error("Failed to fetch tasks", err);
+      return { ok: true, data };
+    } catch {
+      return { ok: false, error: "Network error" };
     } finally {
       set({ loading: false });
     }
   },
 
   addTask: async (title) => {
+    set({ adding: true });
+    // optimistic insert
+    const temp: Task = {
+      id: "tmp-" + Date.now(),
+      title,
+      completed: false,
+    };
+    set((s) => ({ tasks: [temp, ...s.tasks] }));
+
     try {
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
       });
-      if (res.ok) get().fetchTasks();
-    } catch (err) {
-      console.error("Failed to add task", err);
+      if (res.status === 401) {
+        handle401();
+        return { ok: false, error: "Unauthorized" };
+      }
+      if (!res.ok) {
+        // rollback
+        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== temp.id) }));
+        return { ok: false, error: "Failed to add task" };
+      }
+
+      const newTask = await res.json();
+      // replace temp with real
+      set((s) => ({
+        tasks: s.tasks.map((t) => (t.id === temp.id ? newTask : t)),
+      }));
+      return { ok: true, data: newTask };
+    } catch {
+      set((s) => ({ tasks: s.tasks.filter((t) => t.id !== temp.id) }));
+      return { ok: false, error: "Network error" };
+    } finally {
+      set({ adding: false });
     }
   },
 
   toggleTask: async (id, completed) => {
+    // optimistic update
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === id ? { ...t, completed } : t
+      ),
+      busyById: { ...s.busyById, [id]: true },
+    }));
+
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed }),
       });
-      if (res.ok) get().fetchTasks();
-    } catch (err) {
-      console.error("Failed to toggle task", err);
+      if (res.status === 401) {
+        handle401();
+        return { ok: false, error: "Unauthorized" };
+      }
+      if (!res.ok) {
+        get().fetchTasks(); // rollback with server truth
+        return { ok: false, error: "Failed to toggle task" };
+      }
+      const updated = await res.json();
+      set((s) => ({
+        tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
+      }));
+      return { ok: true, data: updated };
+    } catch {
+      get().fetchTasks();
+      return { ok: false, error: "Network error" };
+    } finally {
+      set((s) => {
+        const { [id]: _, ...rest } = s.busyById;
+        return { busyById: rest };
+      });
     }
   },
 
   deleteTask: async (id) => {
+    set((s) => ({
+      tasks: s.tasks.filter((t) => t.id !== id),
+      busyById: { ...s.busyById, [id]: true },
+    }));
+
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-      if (res.ok) get().fetchTasks();
-    } catch (err) {
-      console.error("Failed to delete task", err);
+      if (res.status === 401) {
+        handle401();
+        return { ok: false, error: "Unauthorized" };
+      }
+      if (!res.ok) {
+        get().fetchTasks(); // rollback
+        return { ok: false, error: "Failed to delete task" };
+      }
+      return { ok: true, data: null };
+    } catch {
+      get().fetchTasks();
+      return { ok: false, error: "Network error" };
+    } finally {
+      set((s) => {
+        const { [id]: _, ...rest } = s.busyById;
+        return { busyById: rest };
+      });
     }
   },
 
   updateTask: async (id, updates) => {
+    set((s) => ({
+      busyById: { ...s.busyById, [id]: true },
+    }));
+
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      if (res.ok) get().fetchTasks();
-    } catch (err) {
-      console.error("Failed to update task", err);
+      if (res.status === 401) {
+        handle401();
+        return { ok: false, error: "Unauthorized" };
+      }
+      if (!res.ok) return { ok: false, error: "Failed to update task" };
+
+      const updated = await res.json();
+      set((s) => ({
+        tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
+      }));
+      return { ok: true, data: updated };
+    } catch {
+      return { ok: false, error: "Network error" };
+    } finally {
+      set((s) => {
+        const { [id]: _, ...rest } = s.busyById;
+        return { busyById: rest };
+      });
     }
   },
 }));
