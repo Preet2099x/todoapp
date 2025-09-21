@@ -292,7 +292,7 @@ export default function TasksPage() {
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-20 h-16 bg-white border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="w-20 h-19 bg-white border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 shadow-sm hover:shadow-md"
                     style={{ 
                       color: 'transparent',
                       WebkitAppearance: 'none',
