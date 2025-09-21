@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getTokenFromCookie, verifyToken } from "@/lib/auth";
-import { taskSchema } from "@/lib/validation/task";
+import { createTaskSchema } from "@/lib/validation/task";
 
 export async function GET(req: Request) {
   const cookie = req.headers.get("cookie");
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const parsed = taskSchema.safeParse(body);
+    const parsed = createTaskSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(

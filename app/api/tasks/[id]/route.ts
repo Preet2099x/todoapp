@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getTokenFromCookie, verifyToken } from "@/lib/auth";
-import { taskSchema } from "@/lib/validation/task";
+import { updateTaskSchema } from "@/lib/validation/task";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const cookie = req.headers.get("cookie");
@@ -11,7 +11,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   try {
     const body = await req.json();
-    const parsed = taskSchema.safeParse(body);
+    const parsed = updateTaskSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
