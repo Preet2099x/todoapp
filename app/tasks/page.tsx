@@ -348,12 +348,12 @@ export default function TasksPage() {
           </form>
 
           {/* Filter Bar */}
-          <div className="flex items-center gap-8 relative">
+          <div className="flex items-center justify-center gap-12 relative">
             {(['all', 'active', 'completed'] as FilterType[]).map((filterType) => (
               <button
                 key={filterType}
                 onClick={() => handleFilterChange(filterType)}
-                className={`relative py-3 px-1 text-sm font-medium capitalize transition-colors duration-300 ${
+                className={`relative py-3 px-4 text-sm font-medium capitalize transition-colors duration-300 ${
                   activeFilter === filterType
                     ? 'text-blue-600'
                     : 'text-slate-600 hover:text-slate-900'
