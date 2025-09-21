@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/contexts/ToastContext";
 import { LogIn, Mail, Lock, ArrowRight } from "lucide-react";
 import Image from "next/image";
+import SkeletonAuth from "@/components/SkeletonAuth";
+import Spinner from "@/components/Spinner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +19,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial page load
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (pageLoading) {
+    return <SkeletonAuth />;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -163,7 +179,7 @@ export default function LoginPage() {
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-3">
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      <Spinner size={20} />
                       <span>Signing in...</span>
                     </div>
                   ) : (
