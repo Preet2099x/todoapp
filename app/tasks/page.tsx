@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import Header from "@/components/Header";
+import Spinner from "@/components/Spinner";
+import SkeletonTask from "@/components/SkeletonTask";
 import { useTaskStore } from "@/lib/taskStore";
 import { useToast } from "@/lib/contexts/ToastContext";
 import { Plus, Trash2, CheckSquare, Square, Edit3, Check, Calendar } from "lucide-react";
@@ -63,8 +65,37 @@ export default function TasksPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Your Tasks</h1>
+            <p className="text-gray-600">Manage your daily tasks efficiently</p>
+          </div>
+          
+          {/* Skeleton for Add Task Form */}
+          <div className="backdrop-blur-sm bg-white/30 border border-white/20 rounded-xl shadow-lg p-6 mb-8">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 h-10 bg-slate-200 rounded-md animate-pulse"></div>
+              <div className="w-full sm:w-32 h-10 bg-slate-200 rounded-md animate-pulse"></div>
+              <div className="w-full sm:w-28 h-10 bg-slate-200 rounded-md animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Skeleton for Filter Buttons */}
+          <div className="flex flex-wrap gap-2 mb-6 justify-center">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="w-20 h-8 bg-slate-200 rounded-full animate-pulse"></div>
+            ))}
+          </div>
+
+          {/* Skeleton Tasks */}
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <SkeletonTask key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -266,7 +297,7 @@ export default function TasksPage() {
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl group"
                 >
                   {adding ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    <Spinner size={20} />
                   ) : (
                     <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
                   )}
@@ -484,7 +515,7 @@ export default function TasksPage() {
                           title="Delete task"
                         >
                           {busyById[task.id] ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
+                            <Spinner size={16} />
                           ) : (
                             <Trash2 className="w-4 h-4" />
                           )}
