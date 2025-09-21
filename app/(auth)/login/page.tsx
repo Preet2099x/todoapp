@@ -14,9 +14,11 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/lib/contexts/ToastContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -36,13 +38,19 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Login failed");
+        const errorMsg = data.error || "Login failed";
+        setError(errorMsg);
+        showError("Login Failed", errorMsg);
         return;
       }
 
+      const data = await res.json();
+      success("Welcome back!", `Successfully logged in as ${data.user.email}`);
       router.push("/tasks");
     } catch {
-      setError("Something went wrong");
+      const errorMsg = "Something went wrong";
+      setError(errorMsg);
+      showError("Connection Error", errorMsg);
     } finally {
       setLoading(false);
     }

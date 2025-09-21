@@ -20,7 +20,7 @@ type TaskStore = {
   // actions
   setFilter: (f: "all" | "pending" | "completed") => void;
   fetchTasks: () => Promise<ActionResult<Task[]>>;
-  addTask: (title: string) => Promise<ActionResult<Task>>;
+  addTask: (title: string, description?: string, dueDate?: string) => Promise<ActionResult<Task>>;
   toggleTask: (id: string, completed: boolean) => Promise<ActionResult<Task>>;
   deleteTask: (id: string) => Promise<ActionResult<null>>;
   updateTask: (
@@ -63,13 +63,15 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  addTask: async (title) => {
+  addTask: async (title, description, dueDate) => {
     set({ adding: true });
     // optimistic insert
     const temp: Task = {
       id: "tmp-" + Date.now(),
       title,
+      description,
       completed: false,
+      dueDate: dueDate || null,
     };
     set((s) => ({ tasks: [temp, ...s.tasks] }));
 
@@ -77,7 +79,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title, description, dueDate }),
       });
       if (res.status === 401) {
         handle401();

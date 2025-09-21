@@ -14,9 +14,11 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/lib/contexts/ToastContext";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +32,9 @@ export default function SignupPage() {
     setLoading(true);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      const errorMsg = "Passwords do not match";
+      setError(errorMsg);
+      showError("Validation Error", errorMsg);
       setLoading(false);
       return;
     }
@@ -44,13 +48,18 @@ export default function SignupPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Signup failed");
+        const errorMsg = data.error || "Signup failed";
+        setError(errorMsg);
+        showError("Signup Failed", errorMsg);
         return;
       }
 
+      success("Account Created!", "You can now login with your credentials");
       router.push("/login");
     } catch {
-      setError("Something went wrong");
+      const errorMsg = "Something went wrong";
+      setError(errorMsg);
+      showError("Connection Error", errorMsg);
     } finally {
       setLoading(false);
     }

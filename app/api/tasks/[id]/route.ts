@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getTokenFromCookie, verifyToken } from "@/lib/auth";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const cookie = req.headers.get("cookie");
   const token = getTokenFromCookie(cookie);
   const payload = verifyToken(token);
   if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { title, description, dueDate, completed } = await req.json();
-  const id = params.id;
+  const { id } = await params;
 
   const updatedCount = await prisma.task.updateMany({
-    where: { id, userId: payload.userId },
+    where: { id, userId: payload.id },
     data: { title, description, dueDate: dueDate ? new Date(dueDate) : null, completed },
   });
 
@@ -22,14 +22,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   return NextResponse.json(updated);
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const cookie = req.headers.get("cookie");
   const token = getTokenFromCookie(cookie);
   const payload = verifyToken(token);
   if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const id = params.id;
-  const deleted = await prisma.task.deleteMany({ where: { id, userId: payload.userId } });
+  const { id } = await params;
+  const deleted = await prisma.task.deleteMany({ where: { id, userId: payload.id } });
   if (!deleted.count) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json({ success: true });

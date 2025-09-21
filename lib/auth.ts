@@ -2,7 +2,7 @@
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
 
-const COOKIE_NAME = "todo_app_token";
+const COOKIE_NAME = "token";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 if (!JWT_SECRET) throw new Error("Missing JWT_SECRET env var");
 
@@ -33,5 +33,5 @@ export function setTokenCookie(res: NextResponse, token: string) {
 }
 
 export function clearTokenCookie(res: NextResponse) {
-  res.headers.set(`${"Set-Cookie"}`, `${COOKIE_NAME}=deleted; HttpOnly; Path=/; Max-Age=0; Path=/; SameSite=Lax`);
+  res.headers.set("Set-Cookie", `${COOKIE_NAME}=deleted; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
 }
