@@ -138,6 +138,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return { ok: false, error: "Network error" };
     } finally {
       set((s) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [id]: _, ...rest } = s.busyById;
         return { busyById: rest };
       });
@@ -166,6 +167,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return { ok: false, error: "Network error" };
     } finally {
       set((s) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [id]: _, ...rest } = s.busyById;
         return { busyById: rest };
       });
@@ -198,6 +200,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return { ok: false, error: "Network error" };
     } finally {
       set((s) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [id]: _, ...rest } = s.busyById;
         return { busyById: rest };
       });

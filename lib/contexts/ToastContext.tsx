@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Info, X, Check } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -106,6 +106,13 @@ function ToastItem({ toast, index }: { toast: Toast; index: number }) {
   const [isLeaving, setIsLeaving] = useState(false);
   const [progress, setProgress] = useState(100);
 
+  const handleClose = useCallback(() => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      hideToast(toast.id);
+    }, 300);
+  }, [hideToast, toast.id]);
+
   useEffect(() => {
     // Trigger enter animation with staggered delay
     const timer = setTimeout(() => setIsVisible(true), 50 + index * 100);
@@ -129,14 +136,7 @@ function ToastItem({ toast, index }: { toast: Toast; index: number }) {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [toast.duration]);
-
-  const handleClose = () => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      hideToast(toast.id);
-    }, 300);
-  };
+  }, [toast.duration, handleClose]);
 
   const getIcon = () => {
     if (toast.customIcon) {

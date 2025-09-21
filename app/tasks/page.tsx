@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Header from "@/components/Header";
 import { useTaskStore } from "@/lib/taskStore";
 import { useToast } from "@/lib/contexts/ToastContext";
-import { Plus, Pencil, Trash2, CheckSquare, Square, Edit3, X, Check, Calendar } from "lucide-react";
+import { Plus, Trash2, CheckSquare, Square, Edit3, Check, Calendar } from "lucide-react";
 
 type Task = {
   id: string;
@@ -21,7 +21,6 @@ export default function TasksPage() {
   const {
     tasks,
     loading,
-    filter,
     setFilter,
     fetchTasks,
     addTask,
@@ -42,7 +41,6 @@ export default function TasksPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
   const [dragOverTask, setDragOverTask] = useState<string | null>(null);
-  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
   const [swipedTask, setSwipedTask] = useState<string | null>(null);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -158,7 +156,7 @@ export default function TasksPage() {
     setActiveFilter(newFilter);
     // Update the store filter as well
     const storeFilter = newFilter === "active" ? "pending" : newFilter;
-    setFilter(storeFilter as any);
+    setFilter(storeFilter as "all" | "completed" | "pending");
   };
 
   // Drag and drop handlers
@@ -206,7 +204,8 @@ export default function TasksPage() {
   };
 
   // Touch/Swipe handlers for mobile
-  const handleTouchStart = (e: React.TouchEvent, taskId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleTouchStart = (e: React.TouchEvent, _taskId: string) => {
     const touch = e.touches[0];
     setTouchStart({ x: touch.clientX, y: touch.clientY });
   };
@@ -379,8 +378,6 @@ export default function TasksPage() {
                   swipedTask === task.id ? 'transform -translate-x-4' : ''
                 }`}
                 style={{ animationDelay: `${index * 50}ms` }}
-                onMouseEnter={() => setHoveredTask(task.id)}
-                onMouseLeave={() => setHoveredTask(null)}
               >
                 {editingId === task.id ? (
                   // Edit Mode
