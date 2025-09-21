@@ -32,7 +32,19 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        const errorMsg = data.error || "Login failed";
+        let errorMsg = "Login failed";
+        
+        if (data.error) {
+          // Handle validation errors (object) or simple error messages (string)
+          if (typeof data.error === 'object') {
+            // Zod validation errors are nested objects
+            const firstError = Object.values(data.error)[0];
+            errorMsg = Array.isArray(firstError) ? firstError[0] : firstError || errorMsg;
+          } else {
+            errorMsg = data.error;
+          }
+        }
+        
         setError(errorMsg);
         showError("Login Failed", errorMsg);
         return;
@@ -41,8 +53,9 @@ export default function LoginPage() {
       const data = await res.json();
       success("Welcome back!", `Successfully logged in as ${data.user.email}`);
       router.push("/tasks");
-    } catch {
-      const errorMsg = "Something went wrong";
+    } catch (err) {
+      console.error("Login error:", err);
+      const errorMsg = "Something went wrong. Please try again.";
       setError(errorMsg);
       showError("Connection Error", errorMsg);
     } finally {

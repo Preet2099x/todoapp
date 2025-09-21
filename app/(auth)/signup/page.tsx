@@ -42,7 +42,19 @@ export default function SignupPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        const errorMsg = data.error || "Signup failed";
+        let errorMsg = "Signup failed";
+        
+        if (data.error) {
+          // Handle validation errors (object) or simple error messages (string)
+          if (typeof data.error === 'object') {
+            // Zod validation errors are nested objects
+            const firstError = Object.values(data.error)[0];
+            errorMsg = Array.isArray(firstError) ? firstError[0] : firstError || errorMsg;
+          } else {
+            errorMsg = data.error;
+          }
+        }
+        
         setError(errorMsg);
         showError("Signup Failed", errorMsg);
         return;
@@ -50,8 +62,9 @@ export default function SignupPage() {
 
       success("Account Created!", "You can now login with your credentials");
       router.push("/login");
-    } catch {
-      const errorMsg = "Something went wrong";
+    } catch (err) {
+      console.error("Signup error:", err);
+      const errorMsg = "Something went wrong. Please try again.";
       setError(errorMsg);
       showError("Connection Error", errorMsg);
     } finally {
