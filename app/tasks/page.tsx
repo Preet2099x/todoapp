@@ -405,12 +405,14 @@ export default function TasksPage() {
                 onTouchStart={(e) => handleTouchStart(e, task.id)}
                 onTouchMove={(e) => handleTouchMove(e, task.id)}
                 onTouchEnd={handleTouchEnd}
-                className={`group relative bg-white rounded-2xl p-6 shadow-sm border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
-                  task.completed ? 'opacity-75' : ''
+                className={`group relative rounded-2xl p-6 shadow-sm border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+                  task.completed 
+                    ? 'bg-green-50 border-green-200 opacity-90' 
+                    : 'bg-blue-50 border-blue-200'
                 } ${
                   draggedTask === task.id ? 'opacity-50 scale-105 shadow-xl z-50' : 'opacity-100'
                 } ${
-                  dragOverTask === task.id ? 'border-blue-500 shadow-lg scale-[1.02]' : 'border-slate-200 hover:border-slate-300'
+                  dragOverTask === task.id ? 'border-blue-500 shadow-lg scale-[1.02]' : task.completed ? 'hover:border-green-300' : 'hover:border-blue-300'
                 } ${
                   editingId === task.id ? 'cursor-default' : 'cursor-move hover:shadow-lg md:cursor-default'
                 } ${
