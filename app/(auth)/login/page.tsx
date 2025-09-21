@@ -66,10 +66,10 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side - Form */}
-        <div className="flex items-center justify-center p-6 lg:p-12">
-          <div className="w-full max-w-md">
+        <div className="flex items-center justify-center p-4 lg:p-8 overflow-y-auto">
+          <div className="w-full max-w-md py-4">
             {/* Mobile Header - Only visible on small screens */}
-            <div className="text-center mb-8 lg:hidden">
+            <div className="text-center mb-6 lg:hidden">
               <div className="w-16 h-16 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mb-4 shadow-xl">
                 <LogIn className="w-8 h-8 text-white" />
               </div>
@@ -82,8 +82,8 @@ export default function LoginPage() {
             </div>
 
             {/* Desktop Header */}
-            <div className="text-center mb-8 hidden lg:block">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            <div className="text-center mb-3 hidden lg:block">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent p-2 text-m">
                 Sign In
               </h2>
               <p className="text-slate-600">
@@ -92,8 +92,8 @@ export default function LoginPage() {
             </div>
 
             {/* Login Form Card */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20">
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/20">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium text-slate-700">

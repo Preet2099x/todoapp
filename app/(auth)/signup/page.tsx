@@ -75,9 +75,9 @@ export default function SignupPage() {
         </div>
 
         {/* Right Side - Form */}
-        <div className="flex items-center justify-center p-6 lg:p-12 ">
-          <div className="w-full max-w-md">{/* Mobile Header - Only visible on small screens */}
-            <div className="text-center mb-8 lg:hidden">
+        <div className="flex items-center justify-center p-4 lg:p-8 overflow-y-auto">
+          <div className="w-full max-w-md py-4">{/* Mobile Header - Only visible on small screens */}
+            <div className="text-center mb-6 lg:hidden">
               <div className="w-16 h-16 mx-auto bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-xl">
                 <UserPlus className="w-8 h-8 text-white" />
               </div>
@@ -90,7 +90,7 @@ export default function SignupPage() {
             </div>
 
             {/* Desktop Header */}
-            <div className="text-center mb-8 hidden lg:block">
+            <div className="text-center mb-6 hidden lg:block">
               <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
                 Create Account
               </h2>
