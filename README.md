@@ -1,6 +1,6 @@
 # Todo App
 
-A modern, full-stack task management application built with Next.js 15, TypeScript, and PostgreSQL. Features user authentication, real-time task management, and a beautiful glassmorphism UI design.
+A modern, full-stack task management application built with Next.js 15, TypeScript, and PostgreSQL. Features user authentication, real-time task management.
 
 ## 🚀 Live Demo
 
@@ -10,7 +10,6 @@ A modern, full-stack task management application built with Next.js 15, TypeScri
 
 - 🔐 **Secure Authentication** - JWT-based login/signup with bcrypt password hashing
 - ✅ **Task Management** - Create, edit, delete, and toggle tasks with due dates
-- 🎨 **Modern UI** - Glassmorphism design with warm gradients and smooth animations  
 - 📱 **Responsive Design** - Optimized for desktop, tablet, and mobile devices
 - 🔄 **Real-time Updates** - Zustand state management for instant UI feedback
 - 💾 **Data Persistence** - PostgreSQL database with Prisma ORM
