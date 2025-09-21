@@ -301,7 +301,15 @@ export default function TasksPage() {
                   />
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600 pointer-events-none">
                     <Calendar className="w-5 h-5" />
-                    <span className="text-xs mt-1 font-medium">date</span>
+                    <span className="text-xs mt-1 font-medium">
+                      {dueDate 
+                        ? new Date(dueDate + 'T00:00:00').toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })
+                        : 'date'
+                      }
+                    </span>
                   </div>
                 </div>
               </div>

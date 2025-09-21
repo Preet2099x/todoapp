@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { signupSchema } from "@/lib/validation/auth";
 import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
   try {
-    const { email, username, password, confirmPassword } = await req.json();
+    const body = await req.json();
+    const parsed = signupSchema.safeParse(body);
 
-    if (!email || !username || !password || !confirmPassword) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
-    if (password !== confirmPassword) {
-      return NextResponse.json({ error: "Passwords do not match" }, { status: 400 });
-    }
+    const { email, username, password } = parsed.data;
 
     const existingUser = await prisma.user.findFirst({
       where: {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getTokenFromCookie, verifyToken } from "@/lib/auth";
+import { taskSchema } from "@/lib/validation/task";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const cookie = req.headers.get("cookie");
@@ -8,18 +9,45 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const payload = verifyToken(token);
   if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { title, description, dueDate, completed } = await req.json();
-  const { id } = await params;
+  try {
+    const body = await req.json();
+    const parsed = taskSchema.safeParse(body);
 
-  const updatedCount = await prisma.task.updateMany({
-    where: { id, userId: payload.id },
-    data: { title, description, dueDate: dueDate ? new Date(dueDate) : null, completed },
-  });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
-  if (!updatedCount.count) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const { title, description, dueDate, completed } = parsed.data;
+    const { id } = await params;
 
-  const updated = await prisma.task.findUnique({ where: { id } });
-  return NextResponse.json(updated);
+    // Build update data excluding undefined values
+    const updateData: {
+      title?: string;
+      description?: string;
+      dueDate?: Date | null;
+      completed?: boolean;
+    } = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    if (completed !== undefined) updateData.completed = completed;
+
+    const updatedCount = await prisma.task.updateMany({
+      where: { id, userId: payload.id },
+      data: updateData,
+    });
+
+    if (!updatedCount.count) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const updated = await prisma.task.findUnique({ where: { id } });
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error("Update task error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {

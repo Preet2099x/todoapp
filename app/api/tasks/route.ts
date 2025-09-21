@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getTokenFromCookie, verifyToken } from "@/lib/auth";
+import { taskSchema } from "@/lib/validation/task";
 
 export async function GET(req: Request) {
   const cookie = req.headers.get("cookie");
@@ -18,11 +19,30 @@ export async function POST(req: Request) {
   const payload = verifyToken(token);
   if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { title, description, dueDate } = await req.json();
-  if (!title) return NextResponse.json({ error: "Missing title" }, { status: 400 });
+  try {
+    const body = await req.json();
+    const parsed = taskSchema.safeParse(body);
 
-  const task = await prisma.task.create({
-    data: { title, description, dueDate: dueDate ? new Date(dueDate) : null, userId: payload.id },
-  });
-  return NextResponse.json(task);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { title, description, dueDate } = parsed.data;
+
+    const task = await prisma.task.create({
+      data: { 
+        title, 
+        description, 
+        dueDate: dueDate ? new Date(dueDate) : null, 
+        userId: payload.id 
+      },
+    });
+    return NextResponse.json(task);
+  } catch (err) {
+    console.error("Create task error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }
